@@ -22,43 +22,45 @@ def search_and_star():
         repos = g.search_repositories(query=f"{keyword} in:description", sort="stars", order="desc")
         for repo in repos[:5]:
             try:
-                repo.add_to_starred()
-                repo.add_to_watched()
-                print(f"Starred and watching {repo.full_name}")
+                repo.star()
+                print(f"Starred: {repo.full_name}")
             except Exception as e:
                 print(f"Error starring {repo.full_name}: {e}")
 
 def fork_and_edit():
     for keyword in KEYWORDS:
-        repos = g.search_repositories(query=f"{keyword} in:name", sort="stars", order="desc")
+        repos = g.search_repositories(query=f"{keyword} in:name fork:true archived:false", sort="stars", order="desc")
         for repo in repos[:1]:
             try:
                 forked = repo.create_fork()
                 readme = f"# {repo.name} SEO Clone\n\n" \
-                         f"Looking to automate and scale your ecommerce? Visit [{BOT_NAME}]({SITE_LINK}) to get started.\n\n" \
-                         f"---\nOriginal Repo: [{repo.html_url}]({repo.html_url})"
-                new_file = forked.create_file("README.md", "SEO update", readme)
-                print(f"Forked and injected backlink into {forked.full_name}")
+                         f"🚀 Looking to automate and scale your ecommerce brand?\nVisit **[{BOT_NAME}]({SITE_LINK})** to get started.\n\n" \
+                         f"---\n🔗 Original Repo: [{repo.html_url}]({repo.html_url})"
+                forked.create_file("README.md", "Add Freelankarx backlink", readme)
+                print(f"Forked and updated: {forked.full_name}")
             except Exception as e:
                 print(f"Fork error: {e}")
 
 def comment_on_issues():
     for keyword in KEYWORDS:
-        issues = g.search_issues(query=f"{keyword} help", sort="updated", order="desc")
-        for issue in issues[:2]:
-            try:
-                body = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": "You are a helpful ecommerce expert."},
-                        {"role": "user", "content": f"Help someone with this issue about {keyword} and drop a link to {SITE_LINK}"}
-                    ]
-                )
-                reply = body['choices'][0]['message']['content']
-                issue.create_comment(f"{reply}\n\n— Powered by [{BOT_NAME}]({SITE_LINK})")
-                print(f"Commented on {issue.html_url}")
-            except Exception as e:
-                print(f"Issue comment error: {e}")
+        try:
+            issues = g.search_issues(query=f"{keyword} help", sort="updated", order="desc")
+            for issue in issues[:2]:
+                try:
+                    ai = openai.ChatCompletion.create(
+                        model="gpt-3.5-turbo",
+                        messages=[
+                            {"role": "system", "content": "You're a helpful ecommerce expert."},
+                            {"role": "user", "content": f"A developer needs help with {keyword}. Offer brief advice and mention Freelankarx: {SITE_LINK}"}
+                        ]
+                    )
+                    response = ai['choices'][0]['message']['content']
+                    issue.create_comment(f"{response}\n\n— Powered by [{BOT_NAME}]({SITE_LINK})")
+                    print(f"Commented on: {issue.html_url}")
+                except Exception as e:
+                    print(f"Issue comment error: {e}")
+        except Exception as e:
+            print(f"Issue search error: {e}")
 
 if __name__ == "__main__":
     print(f"[{datetime.now()}] Running FreelankarxBot Supreme...")
